@@ -85,6 +85,8 @@ class OpenfoamOrg(Package):
             url=baseurl + '/OpenFOAM-5.x/archive/version-5.0.tar.gz')
     version('4.1', 'afd7d8e66e7db0ffaf519b14f1a8e1d4',
             url=baseurl + '/OpenFOAM-4.x/archive/version-4.1.tar.gz')
+    version('2.3.1', 'a963082172c233e3834a50a82dbaa6b5',
+            url=baseurl + '/OpenFOAM-2.3.x/archive/version-2.3.1.tar.gz')
     version('develop', git='https://github.com/OpenFOAM/OpenFOAM-dev.git')
 
     variant('int64', default=False,
@@ -112,13 +114,7 @@ class OpenfoamOrg(Package):
     patch('50-etc.patch', when='@5.0:')
     patch('41-etc.patch', when='@4.1')
     patch('41-site.patch', when='@4.1:')
-
-    # Some user config settings
-    config = {
-        'mplib': 'SYSTEMMPI',   # Use system mpi for spack
-        # Add links into bin/, lib/ (eg, for other applications)
-        'link': False
-    }
+    patch('231-etc.patch', when='@:2.3.1')
 
     # The openfoam architecture, compiler information etc
     _foam_arch = None
@@ -135,6 +131,19 @@ class OpenfoamOrg(Package):
     #
     # - End of definitions / setup -
     #
+
+    # Some user config settings
+    @property
+    def config(self):
+      settings = {'link': False}
+      # 2.3.1 by default doesn't have support SYSTEMMPI value
+      # It also lacks some additional variables such as WM_LABEL_OPTION
+      if self.spec.satisfies('@:2.3.1'):
+        settings['mplib'] = 'SYSTEMOPENMPI'
+        settings['options'] = os.environ['WM_OPTIONS']
+      else:
+        settings['mplib'] = 'SYSTEMMPI'
+      return settings
 
     def setup_environment(self, spack_env, run_env):
         # This should be similar to the openfoam-com package,
@@ -169,12 +178,18 @@ class OpenfoamOrg(Package):
     @property
     def archbin(self):
         """Relative location of architecture-specific executables"""
-        return join_path('platforms', self.foam_arch, 'bin')
+        if(self.spec.satisfies('@:2.3.1')):
+          return join_path('platforms', os.environ['WM_OPTIONS'], 'bin')      
+        else:
+          return join_path('platforms', self.foam_arch, 'bin')
 
     @property
     def archlib(self):
         """Relative location of architecture-specific libraries"""
-        return join_path('platforms', self.foam_arch, 'lib')
+        if(self.spec.satisfies('@:2.3.1')):
+          return join_path('platforms', os.environ['WM_OPTIONS'], 'lib')      
+        else:
+          return join_path('platforms', self.foam_arch, 'lib')
 
     def rename_source(self):
         """This is fairly horrible.
@@ -266,6 +281,12 @@ class OpenfoamOrg(Package):
 
         # Adjust components to use SPACK variants
         for component, subdict in self.etc_config.items():
+          if spec.satisfies('@2.3.1'):
+            write_environ(
+                subdict,
+                posix=join_path('etc', 'config',  component)+'.sh',
+                cshell=join_path('etc', 'config', component)+'csh')
+          else:
             write_environ(
                 subdict,
                 posix=join_path('etc', 'config.sh',  component),
