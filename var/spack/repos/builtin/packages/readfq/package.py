@@ -1,5 +1,5 @@
 ##############################################################################
-# Copyright (c) 2013-2018, Lawrence Livermore National Security, LLC.
+# Copyright (c) 2013-2017, Lawrence Livermore National Security, LLC.
 # Produced at the Lawrence Livermore National Laboratory.
 #
 # This file is part of Spack.
@@ -25,11 +25,14 @@
 from spack import *
 
 
-class Rsync(AutotoolsPackage):
-    """An open source utility that provides fast incremental file transfer."""
-    homepage = "https://rsync.samba.org"
-    url      = "https://download.samba.org/pub/rsync/src/rsync-3.1.2.tar.gz"
+class Readfq(Package):
+    """Readfq is a collection of routines for parsing the FASTA/FASTQ format.
+    It seamlessly parses both FASTA and multi-line FASTQ with a simple
+    interface."""
 
-    version('3.1.3', '1581a588fde9d89f6bc6201e8129afaf')
-    version('3.1.2', '0f758d7e000c0f7f7d3792610fad70cb')
-    version('3.1.1', '43bd6676f0b404326eee2d63be3cdcfe')
+    homepage = "https://github.com/lh3/readfq"
+
+    version('2013.04.10', git='https://github.com/lh3/readfq.git', commit='4fb766095d8f459e0f8025be70f9173673905d12')
+
+    def install(self, spec, prefix):
+        install_tree('.', prefix.bin)
