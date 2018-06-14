@@ -180,12 +180,18 @@ class OpenfoamOrg(Package):
     @property
     def archbin(self):
         """Relative location of architecture-specific executables"""
-        return join_path('platforms', self.foam_arch, 'bin')
+        if(self.spec.satisfies('@:2.3.1')):
+          return join_path('platforms', os.environ['WM_OPTIONS'], 'bin')      
+        else:
+          return join_path('platforms', self.foam_arch, 'bin')
 
     @property
     def archlib(self):
         """Relative location of architecture-specific libraries"""
-        return join_path('platforms', self.foam_arch, 'lib')
+        if(self.spec.satisfies('@:2.3.1')):
+          return join_path('platforms', os.environ['WM_OPTIONS'], 'lib')      
+        else:
+          return join_path('platforms', self.foam_arch, 'lib')
 
     def rename_source(self):
         """This is fairly horrible.
